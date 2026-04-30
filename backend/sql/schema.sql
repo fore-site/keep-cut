@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS items (
 CREATE TABLE IF NOT EXISTS game_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     edition TEXT NOT NULL CHECK (edition IN ('anime', 'movies', 'tv_shows')),
-    remaining INTEGER DEFAULT 8,           -- how many choices left (counts down from 8)
+    remaining INTEGER DEFAULT 8,
+    shown_ids INTEGER[] DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

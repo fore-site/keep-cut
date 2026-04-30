@@ -5,3 +5,7 @@ pydantic
 python-dotenv
 aiohttp
 requests
+pytest
+pytest-aysncio
+httpx
+asgi-lifespan

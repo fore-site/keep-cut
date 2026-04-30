@@ -6,17 +6,13 @@ import aiohttp
 from dotenv import load_dotenv
 import logging
 from typing import List, Dict, Any
+from app.config import TMDB_API_KEY, DATABASE_URL
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Add parent directory to path if running directly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-load_dotenv()
-
-TMDB_API_KEY = os.getenv("TMDB_API_KEY")  # Your TMDB API key
-DATABASE_URL = os.getenv("DATABASE_URL")  # Your PostgreSQL connection string
 
 GENRE_MOVIE_SUPERHERO = 28  # Action genre ID, commonly used for superhero/comic movies
 

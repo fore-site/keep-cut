@@ -15,13 +15,13 @@ import asyncpg
 import requests
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
+from app.config import DATABASE_URL
 
 # Add parent directory to path if running directly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
 ANILIST_API_URL = "https://graphql.anilist.co"
 
 # Configuration
