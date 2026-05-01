@@ -35,6 +35,7 @@ async def get_kept_leaderboard(
 
 
 @router.get("/leaderboard/cut", response_model=List[LeaderboardEntry])
+@limiter.limit("30/minute")
 async def get_cut_leaderboard(
     request: Request,
     edition: str = Query(..., description="Edition: anime, movies, tv_shows"),
