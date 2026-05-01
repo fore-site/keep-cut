@@ -2,3 +2,5 @@ backend/.env
 backend/venv
 __pycache__/
 */**/__pycache__/
+backend/.pytest_cache/
+frontend/.env

@@ -8,6 +8,11 @@ from datetime import datetime, timezone
 from app.config import DEBUG, APP_NAME, CORS_ORIGINS
 from app.db import init_db_pool, close_db_pool, get_db
 from app.routers import keep_cut, items, votes
+from .limiter import limiter
+
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO if not DEBUG else logging.DEBUG)
@@ -48,6 +53,8 @@ app.include_router(keep_cut.router)
 app.include_router(items.router)
 app.include_router(votes.router)
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 @app.get("/")
 async def root():

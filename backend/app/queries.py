@@ -98,7 +98,7 @@ async def create_session(
     return await conn.fetchrow("""
         INSERT INTO game_sessions (id, edition)
         VALUES ($1, $2)
-        RETURNING id, edition, remaining, created_at, updated_at
+        RETURNING id, edition, remaining
     """, session_id, edition)
 
 
@@ -108,35 +108,73 @@ async def get_session(
 ) -> Optional[asyncpg.Record]:
     """Retrieve a game session by ID."""
     return await conn.fetchrow("""
-        SELECT id, edition, remaining, shown_ids, created_at, updated_at
+        SELECT id, edition, remaining
         FROM game_sessions
-        WHERE id = $1
+        WHERE id = $1 AND completed = FALSE
     """, session_id)
 
 
 async def update_session_decision(
     conn: asyncpg.Connection,
     session_id: UUID,
-    item_id: int
+    item_id: int,
+    decision: str  # 'keep' or 'cut'
 ) -> asyncpg.Record:
-    """Record a decision and decrement remaining. Returns updated session."""
-    return await conn.fetchrow("""
-        UPDATE game_sessions
-        SET
-            shown_ids = array_append(shown_ids, $2),
-            remaining = remaining - 1,
-            updated_at = NOW()
-        WHERE id = $1
-        RETURNING id, remaining, shown_ids
-    """, session_id, item_id)
+    """Record decision, increment appropriate counter, decrement remaining."""
+    if decision == 'keep':
+        return await conn.fetchrow("""
+            UPDATE game_sessions
+            SET
+                shown_ids = array_append(shown_ids, $2),
+                kept_count = kept_count + 1,
+                remaining = remaining - 1,
+                updated_at = NOW()
+            WHERE id = $1
+            RETURNING id, remaining, shown_ids, kept_count, cut_count
+        """, session_id, item_id)
+    else:  # cut
+        return await conn.fetchrow("""
+            UPDATE game_sessions
+            SET
+                shown_ids = array_append(shown_ids, $2),
+                cut_count = cut_count + 1,
+                remaining = remaining - 1,
+                updated_at = NOW()
+            WHERE id = $1
+            RETURNING id, remaining, shown_ids, kept_count, cut_count
+        """, session_id, item_id)
+    
+
+async def get_random_unshown_items(
+    conn: asyncpg.Connection,
+    edition: str,
+    shown_ids: List[int],
+    count: int
+) -> List[asyncpg.Record]:
+    """
+    Fetch `count` random distinct items from the given edition
+    that are NOT in `shown_ids`.
+    """
+    if count <= 0:
+        return []
+    return await conn.fetch("""
+        SELECT id, name, image_url, edition
+        FROM items
+        WHERE edition = $1
+          AND id != ALL($2::int[])
+        ORDER BY RANDOM()
+        LIMIT $3
+    """, edition, shown_ids, count)
 
 
-async def delete_session(
+async def mark_session_complete(
     conn: asyncpg.Connection,
     session_id: UUID
 ) -> str:
-    """Delete a game session. Returns 'OK' or raises exception."""
-    await conn.execute("DELETE FROM game_sessions WHERE id = $1", session_id)
+    """Mark a game session as completed."""
+    await conn.execute("""UPDATE game_sessions 
+                       SET completed = TRUE 
+                       WHERE id = $1""", session_id)
     return "OK"
 
 

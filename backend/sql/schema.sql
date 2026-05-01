@@ -20,7 +20,10 @@ CREATE TABLE IF NOT EXISTS game_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     edition TEXT NOT NULL CHECK (edition IN ('anime', 'movies', 'tv_shows')),
     remaining INTEGER DEFAULT 8,
+    kept_count INTEGER DEFAULT 0,
+    cut_count INTEGER DEFAULT 0,
     shown_ids INTEGER[] DEFAULT '{}',
+    completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -45,6 +48,7 @@ CREATE INDEX IF NOT EXISTS idx_items_edition ON items(edition);
 -- Game sessions: clean up old sessions
 CREATE INDEX IF NOT EXISTS idx_game_sessions_updated ON game_sessions(updated_at);
 CREATE INDEX IF NOT EXISTS idx_game_sessions_edition ON game_sessions(edition);
+CREATE INDEX IF NOT EXISTS idx_game_sessions_completed ON game_sessions(completed);
 
 -- Votes: fast analytics queries
 CREATE INDEX IF NOT EXISTS idx_votes_edition_decision ON votes(edition, decision);

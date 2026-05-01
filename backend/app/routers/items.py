@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from typing import List, Optional
 import asyncpg
 
@@ -15,6 +15,7 @@ router = APIRouter(prefix="/items", tags=["items"])
 
 @router.get("/", response_model=List[ItemResponse])
 async def list_items(
+    request: Request,
     edition: Optional[str] = Query(None, description="Filter by edition: anime, movies, tv_shows"),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
@@ -30,6 +31,7 @@ async def list_items(
 @router.get("/{item_id}", response_model=ItemResponse)
 async def get_item(
     item_id: int,
+    request: Request,
     conn: asyncpg.Connection = Depends(get_db)
 ):
     """
@@ -44,6 +46,7 @@ async def get_item(
 @router.get("/count/{edition}", response_model=int)
 async def count_items(
     edition: str,
+    request: Request,
     conn: asyncpg.Connection = Depends(get_db)
 ):
     """

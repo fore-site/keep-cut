@@ -9,3 +9,5 @@ pytest
 pytest-aysncio
 httpx
 asgi-lifespan
+redis
+slowapi

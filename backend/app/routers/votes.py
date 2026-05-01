@@ -1,16 +1,19 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from typing import List
 import asyncpg
 
 from app.db import get_db
 from app.queries import top_kept_items, top_cut_items
 from app.schemas import LeaderboardEntry
+from app.limiter import limiter
 
 router = APIRouter(prefix="/votes", tags=["votes"])
 
 
 @router.get("/leaderboard/kept", response_model=List[LeaderboardEntry])
+@limiter.limit("30/minute")
 async def get_kept_leaderboard(
+    request: Request,
     edition: str = Query(..., description="Edition: anime, movies, tv_shows"),
     limit: int = Query(10, ge=1, le=50),
     conn: asyncpg.Connection = Depends(get_db)
@@ -33,6 +36,7 @@ async def get_kept_leaderboard(
 
 @router.get("/leaderboard/cut", response_model=List[LeaderboardEntry])
 async def get_cut_leaderboard(
+    request: Request,
     edition: str = Query(..., description="Edition: anime, movies, tv_shows"),
     limit: int = Query(10, ge=1, le=50),
     conn: asyncpg.Connection = Depends(get_db)
@@ -56,6 +60,7 @@ async def get_cut_leaderboard(
 @router.get("/stats/edition/{edition}")
 async def get_edition_stats(
     edition: str,
+    request: Request,
     conn: asyncpg.Connection = Depends(get_db)
 ):
     """
