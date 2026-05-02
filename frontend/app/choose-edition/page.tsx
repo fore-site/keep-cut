@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { startGame, getLeaderboard, type Item, LeaderboardItem } from "@/lib/api";
-import { Film, Tv, Scroll, Loader2 } from "lucide-react";
+import { startBlindGame, startOpenGame, getLeaderboard, LeaderboardItem } from "@/lib/api";
+import { Film, Tv, Scroll, EyeOff, Eye, Loader2 } from "lucide-react";
 
 const editions = [
   { id: "anime", label: "Anime", icon: Scroll },
@@ -14,6 +14,7 @@ const editions = [
 export default function ChooseEdition() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"blind" | "open">("blind");
   const [activeEdition, setActiveEdition] = useState("anime");
   const [leaderboards, setLeaderboards] = useState<{ kept: LeaderboardItem[], cut: LeaderboardItem[] }>({ kept: [], cut: [] });
   const [fetchingLeaderboard, setFetchingLeaderboard] = useState(false);
@@ -39,10 +40,18 @@ export default function ChooseEdition() {
   async function handleStart(edition: string) {
     setLoading(true);
     try {
-      const data = await startGame(edition);
-      // Store in localStorage to pass to game page
-      localStorage.setItem("current_session", JSON.stringify(data));
-      router.push("/game");
+      localStorage.setItem("edition", edition);
+      localStorage.setItem("mode", mode);
+
+      if (mode === "open") {
+        const data = await startOpenGame(edition);
+        localStorage.setItem("open_session", JSON.stringify(data));
+        router.push("/open-game");
+      } else {
+        const data = await startBlindGame(edition);
+        localStorage.setItem("current_session", JSON.stringify(data));
+        router.push("/game");
+      }
     } catch (error) {
       alert("Failed to start game. Please try again.");
     } finally {
@@ -54,7 +63,32 @@ export default function ChooseEdition() {
     <div className="space-y-12 animate-in slide-in-from-bottom-4 duration-500">
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-black">Choose Your Edition</h1>
-        <p className="opacity-60">Pick a category to begin your sequence.</p>
+        <p className="opacity-60">Pick a game mode and category to begin.</p>
+      </div>
+
+      <div className="flex justify-center">
+        <div className="flex bg-white rounded-full p-1 border border-[#e2e1de]">
+          <button
+            onClick={() => setMode("blind")}
+            disabled={loading}
+            className={`px-4 py-2 rounded-full text-sm font-bold transition-all inline-flex items-center gap-2 ${
+              mode === "blind" ? "bg-sky text-white" : "hover:bg-peach"
+            }`}
+          >
+            <EyeOff className="w-4 h-4" />
+            Blind
+          </button>
+          <button
+            onClick={() => setMode("open")}
+            disabled={loading}
+            className={`px-4 py-2 rounded-full text-sm font-bold transition-all inline-flex items-center gap-2 ${
+              mode === "open" ? "bg-sky text-white" : "hover:bg-peach"
+            }`}
+          >
+            <Eye className="w-4 h-4" />
+            Open
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

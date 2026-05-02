@@ -13,6 +13,12 @@ export interface StartResponse {
   remaining: number;
 }
 
+export interface OpenStartResponse {
+  session_id: string;
+  items: Item[];
+  remaining: number;
+}
+
 export interface DecisionContinueResponse {
   round_complete: false;
   remaining: number;
@@ -27,37 +33,112 @@ export interface DecisionFinalResponse {
 
 export type DecisionResponse = DecisionContinueResponse | DecisionFinalResponse;
 
+export type OpenDecisionResponse =
+  | { round_complete: false; remaining: number; next_item: null }
+  | { round_complete: true; kept_items: Item[]; cut_items: Item[] };
+
 export interface LeaderboardItem extends Item {
   count: number;
 }
 
-export async function startGame(edition: string): Promise<StartResponse> {
-  const response = await fetch(`${API_BASE_URL}/keep-cut/start`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ edition }),
-  });
-  if (!response.ok) throw new Error('Failed to start game');
-  return response.json();
+function requireApiBaseUrl(): string {
+  if (!API_BASE_URL) {
+    throw new Error("NEXT_PUBLIC_API_URL is not set");
+  }
+  return API_BASE_URL;
 }
 
-export async function makeDecision(sessionId: string, itemId: number, action: 'keep' | 'cut'): Promise<DecisionResponse> {
-  const response = await fetch(`${API_BASE_URL}/keep-cut/decide`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ session_id: sessionId, item_id: itemId, action }),
-  });
-  if (!response.ok) throw new Error('Failed to make decision');
-  return response.json();
+async function postJson<T>(paths: string[], body: unknown): Promise<T> {
+  const baseUrl = requireApiBaseUrl();
+  let lastError: unknown = null;
+
+  for (const path of paths) {
+    const response = await fetch(`${baseUrl}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (response.ok) return response.json();
+
+    // Allow back-compat fallbacks (e.g. old routes) on 404 only.
+    if (response.status === 404) {
+      lastError = new Error(`Endpoint not found: ${path}`);
+      continue;
+    }
+
+    let message = `Request failed (${response.status})`;
+    try {
+      const data = await response.json();
+      message = typeof data?.detail === "string" ? data.detail : message;
+    } catch {
+      // ignore
+    }
+    throw new Error(message);
+  }
+
+  throw (lastError instanceof Error ? lastError : new Error("Request failed"));
+}
+
+export async function startBlindGame(edition: string): Promise<StartResponse> {
+  // Prefer new blind-mode endpoints; fall back to legacy paths if needed.
+  return postJson<StartResponse>(
+    ["/keep-cut/blind/start", "/keep-cut/start"],
+    { edition },
+  );
+}
+
+// Back-compat alias (existing blind-mode UI uses this name).
+export async function startGame(edition: string): Promise<StartResponse> {
+  return startBlindGame(edition);
+}
+
+export async function makeBlindDecision(
+  sessionId: string,
+  itemId: number,
+  action: "keep" | "cut",
+): Promise<DecisionResponse> {
+  return postJson<DecisionResponse>(
+    ["/keep-cut/blind/decide", "/keep-cut/decide"],
+    { session_id: sessionId, item_id: itemId, action },
+  );
+}
+
+// Back-compat alias (existing blind-mode UI uses this name).
+export async function makeDecision(
+  sessionId: string,
+  itemId: number,
+  action: "keep" | "cut",
+): Promise<DecisionResponse> {
+  return makeBlindDecision(sessionId, itemId, action);
+}
+
+export async function startOpenGame(edition: string): Promise<OpenStartResponse> {
+  return postJson<OpenStartResponse>(["/keep-cut/open/start"], { edition });
+}
+
+export async function decideOpenGame(
+  sessionId: string,
+  itemId: number,
+  action: "keep" | "cut",
+): Promise<OpenDecisionResponse> {
+  return postJson<OpenDecisionResponse>(
+    ["/keep-cut/open/decide"],
+    { session_id: sessionId, item_id: itemId, action },
+  );
 }
 
 export async function getLeaderboard(type: 'kept' | 'cut', edition: string, limit: number = 5): Promise<LeaderboardItem[]> {
-  const response = await fetch(`${API_BASE_URL}/votes/leaderboard/${type}?edition=${edition}&limit=${limit}`);
+  const baseUrl = requireApiBaseUrl();
+  const response = await fetch(`${baseUrl}/votes/leaderboard/${type}?edition=${edition}&limit=${limit}`);
   if (!response.ok) return [];
   const data = await response.json();
   // Use the correct count field based on the endpoint type
   return data.map((item: any) => ({
-    ...item,
+    id: item.item_id ?? item.id,
+    name: item.name,
+    image_url: item.image_url,
+    edition,
     count: type === "kept"
       ? item.keep_count ?? 0
       : item.cut_count ?? 0,

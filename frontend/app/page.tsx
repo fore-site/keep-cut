@@ -9,7 +9,7 @@ export default function LandingPage() {
           KEEP <span className="opacity-30">/</span> CUT
         </h1>
         <p className="text-xl md:text-2xl font-medium max-w-lg mx-auto opacity-80">
-          A blind sequential choice game for anime, movies, and TV shows.
+          Play in blind (sequential) or open mode for anime, movies, and TV shows.
         </p>
       </div>
 
@@ -17,7 +17,7 @@ export default function LandingPage() {
         <div className="absolute top-0 left-0 w-2 h-full bg-terracotta" />
         <h2 className="text-lg font-bold mb-2">How to Play</h2>
         <p className="text-sm leading-relaxed opacity-90">
-          You’ll see 8 items one by one. For each, decide to <span className="font-bold text-teal">KEEP</span> or <span className="font-bold text-coral">CUT</span> without knowing what comes next. The game ends once you have kept or cut 4 items.
+          You’ll see 8 items one by one. For each, decide to <span className="font-bold text-teal">KEEP</span> or <span className="font-bold text-coral">CUT</span> without (or while) knowing what comes next. The game ends once you have kept or cut 4 items.
         </p>
       </div>
 
