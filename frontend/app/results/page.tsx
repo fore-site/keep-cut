@@ -24,6 +24,8 @@ export default function ResultsPage() {
 
   function getShareText() {
     if (!results) return '';
+    // Get edition from localStorage (fallback to 'Unknown Edition' if not found)
+    const edition = localStorage.getItem("edition") || "unknown";
     const keptList = results.kept.length
       ? results.kept.map(i => `• ${i.name}`).join("\n")
       : 'None';
@@ -31,7 +33,7 @@ export default function ResultsPage() {
       ? results.cut.map(i => `• ${i.name}`).join("\n")
       : 'None';
     return (
-      `I played Keep/Cut!\n\n` +
+      `I played Keep/Cut! (${edition} edition)\n\n` +
       `Kept:\n${keptList}\n\n` +
       `Cut:\n${cutList}\n\n` +
       `Try it yourself: https://keep-cut.vercel.app`

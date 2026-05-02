@@ -21,7 +21,13 @@ export default function GamePage() {
       router.replace("/choose-edition");
       return;
     }
-    setSession(JSON.parse(saved));
+    const sessionData = JSON.parse(saved);
+    setSession(sessionData);
+
+    // Set or override the edition in localStorage every time this page is visited
+    if (sessionData && sessionData.item && sessionData.item.edition) {
+      localStorage.setItem("edition", sessionData.item.edition);
+    }
   }, [router]);
 
   async function handleDecision(action: "keep" | "cut") {
