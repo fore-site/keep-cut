@@ -5,8 +5,8 @@ pydantic
 python-dotenv
 aiohttp
 requests
+pytest-asyncio
 pytest
-pytest-aysncio
 httpx
 asgi-lifespan
 redis
