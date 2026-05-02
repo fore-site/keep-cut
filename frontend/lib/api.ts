@@ -55,9 +55,11 @@ export async function getLeaderboard(type: 'kept' | 'cut', edition: string, limi
   const response = await fetch(`${API_BASE_URL}/votes/leaderboard/${type}?edition=${edition}&limit=${limit}`);
   if (!response.ok) return [];
   const data = await response.json();
-  // Map backend count field to 'count'
+  // Use the correct count field based on the endpoint type
   return data.map((item: any) => ({
     ...item,
-    count: item.count ?? item.keep_count ?? item.cut_count ?? 0,
+    count: type === "kept"
+      ? item.keep_count ?? 0
+      : item.cut_count ?? 0,
   }));
 }
