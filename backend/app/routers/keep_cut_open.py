@@ -34,7 +34,7 @@ async def start_open_game(
     
     session_id = uuid4()
     item_ids = [item["id"] for item in items]
-    session = await create_open_session(conn, session_id, req.edition, item_ids)
+    await create_open_session(conn, session_id, req.edition, item_ids)
     
     # Convert items to response format
     item_list = [ItemResponse(id=item["id"], name=item["name"], image_url=item["image_url"], edition=item["edition"]) for item in items]
