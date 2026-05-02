@@ -12,12 +12,6 @@ export default function Footer() {
             >
               Home
             </Link>
-            <Link 
-              href="/choose-edition" 
-              className="hover:text-terracotta transition-colors"
-            >
-              Play
-            </Link>
             <a 
               href="https://github.com/fore-site/keep-cut" 
               target="_blank" 

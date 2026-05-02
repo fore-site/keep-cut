@@ -27,8 +27,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.variable} ${figtree.variable} antialiased min-h-screen`}>
-        <main className="max-w-4xl mx-auto px-4 py-8">
+      <body className={`${outfit.variable} ${figtree.variable} antialiased flex flex-col min-h-screen`}>
+        <main className="max-w-4xl mx-auto px-4 py-8 flex-grow">
           {children}
         </main>
         <Footer />
