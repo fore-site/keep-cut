@@ -54,5 +54,10 @@ export async function makeDecision(sessionId: string, itemId: number, action: 'k
 export async function getLeaderboard(type: 'kept' | 'cut', edition: string, limit: number = 5): Promise<LeaderboardItem[]> {
   const response = await fetch(`${API_BASE_URL}/votes/leaderboard/${type}?edition=${edition}&limit=${limit}`);
   if (!response.ok) return [];
-  return response.json();
+  const data = await response.json();
+  // Map backend count field to 'count'
+  return data.map((item: any) => ({
+    ...item,
+    count: item.count ?? item.keep_count ?? item.cut_count ?? 0,
+  }));
 }
