@@ -6,12 +6,14 @@ import { makeDecision, type Item, type StartResponse, type DecisionContinueRespo
 import { Loader2, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
+
 export default function GamePage() {
   const router = useRouter();
   const [session, setSession] = useState<StartResponse | null>(null);
   const [round, setRound] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showEnding, setShowEnding] = useState<null | { action: "keep" | "cut"; edition: string }>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("current_session");
@@ -30,11 +32,15 @@ export default function GamePage() {
     try {
       const data = await makeDecision(session.session_id, session.item.id, action);
       if (data.round_complete === true) {
+        // Show ending message before navigating
+        setShowEnding({ action, edition: session.item.edition });
         localStorage.setItem("results", JSON.stringify({
           kept: data.kept_items,
           cut: data.cut_items
         }));
-        router.push("/results");
+        setTimeout(() => {
+          router.push("/results");
+        }, 2000); // Show message for 2 seconds
       } else {
         // data.round_complete is false here
         const nextData = data as DecisionContinueResponse;
@@ -52,11 +58,23 @@ export default function GamePage() {
     }
   }
 
+
   if (!session) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
       <Loader2 className="w-10 h-10 animate-spin text-terracotta" />
     </div>
   );
+
+  if (showEnding) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Loader2 className="w-10 h-10 animate-spin text-terracotta" />
+        <div className="text-lg font-bold text-center mt-4">
+          You have {showEnding.action === "keep" ? "kept" : "cut"} 4 {showEnding.edition}. Game ending...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md mx-auto space-y-8 pb-20">

@@ -17,7 +17,7 @@ export default function LandingPage() {
         <div className="absolute top-0 left-0 w-2 h-full bg-terracotta" />
         <h2 className="text-lg font-bold mb-2">How to Play</h2>
         <p className="text-sm leading-relaxed opacity-90">
-          You’ll see 8 items one by one. For each, decide to <span className="font-bold text-teal">KEEP</span> or <span className="font-bold text-coral">CUT</span> without knowing what comes next. After 8 rounds, see your final 4 favorites and 4 rejects.
+          You’ll see 8 items one by one. For each, decide to <span className="font-bold text-teal">KEEP</span> or <span className="font-bold text-coral">CUT</span> without knowing what comes next. The game ends once you have kept or cut 4 items.
         </p>
       </div>
 
