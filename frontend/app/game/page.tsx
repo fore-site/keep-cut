@@ -46,7 +46,7 @@ export default function GamePage() {
         setRound(prev => prev + 1);
       }
     } catch (err) {
-      setError("Network failure. Please try again.");
+      setError("You have completed this session already. Kindly start over.");
     } finally {
       setLoading(false);
     }

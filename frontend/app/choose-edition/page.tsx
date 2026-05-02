@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { startGame, getLeaderboard, type LeaderboardItem } from "@/lib/api";
-import { Film, Tv, Ghost, Loader2 } from "lucide-react";
+import { startGame, getLeaderboard, type Item } from "@/lib/api";
+import { Film, Tv, Scroll, Loader2 } from "lucide-react";
 
 const editions = [
-  { id: "anime", label: "Anime", icon: Ghost },
+  { id: "anime", label: "Anime", icon: Scroll },
   { id: "movies", label: "Movies", icon: Film },
   { id: "tv_shows", label: "TV Shows", icon: Tv },
 ];
@@ -15,7 +15,7 @@ export default function ChooseEdition() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [activeEdition, setActiveEdition] = useState("anime");
-  const [leaderboards, setLeaderboards] = useState<{ kept: LeaderboardItem[], cut: LeaderboardItem[] }>({ kept: [], cut: [] });
+  const [leaderboards, setLeaderboards] = useState<{ kept: Item[], cut: Item[] }>({ kept: [], cut: [] });
   const [fetchingLeaderboard, setFetchingLeaderboard] = useState(false);
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export default function ChooseEdition() {
   );
 }
 
-function LeaderboardColumn({ title, items }: { title: string, items: LeaderboardItem[] }) {
+function LeaderboardColumn({ title, items }: { title: string, items: Item[] }) {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-bold uppercase tracking-widest opacity-40">{title}</h3>
@@ -127,7 +127,6 @@ function LeaderboardColumn({ title, items }: { title: string, items: Leaderboard
               />
               <div className="flex-1 min-w-0">
                 <div className="font-bold truncate">{item.name}</div>
-                <div className="text-xs opacity-50 uppercase">{item.count} votes</div>
               </div>
             </div>
           ))
