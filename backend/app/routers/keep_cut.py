@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/keep-cut", tags=["keep-cut"])
 
 
-@router.post("/start", response_model=StartGameResponse)
+@router.post("/blind/start", response_model=StartGameResponse)
 @limiter.limit("10/minute")
 async def start_game(
     req: StartGameRequest,
@@ -73,7 +73,7 @@ async def start_game(
     )
 
 
-@router.post("/decide", response_model=DecisionResponse)
+@router.post("/blind/decide", response_model=DecisionResponse)
 @limiter.limit("15/minute")
 async def make_decision(
     req: DecisionRequest,

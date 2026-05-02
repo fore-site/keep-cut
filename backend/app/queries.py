@@ -145,6 +145,76 @@ async def update_session_decision(
         """, session_id, item_id)
     
 
+# ===== Open mode functions =====
+
+async def create_open_session(
+    conn: asyncpg.Connection,
+    session_id: UUID,
+    edition: str,
+    item_ids: List[int]
+) -> asyncpg.Record:
+    """Create a session for open mode with predefined list of 8 items."""
+    return await conn.fetchrow("""
+        INSERT INTO game_sessions (id, edition, item_ids, remaining)
+        VALUES ($1, $2, $3, 8)
+        RETURNING id, edition, item_ids, remaining, created_at
+    """, session_id, edition, item_ids)
+
+
+async def get_open_session(
+    conn: asyncpg.Connection,
+    session_id: UUID
+) -> Optional[asyncpg.Record]:
+    """Retrieve an open session (including item_ids array)."""
+    return await conn.fetchrow("""
+        SELECT id, edition, item_ids, remaining, kept_count, cut_count, completed
+        FROM game_sessions
+        WHERE id = $1 AND completed = FALSE
+    """, session_id)
+
+
+async def update_open_session_decision(
+    conn: asyncpg.Connection,
+    session_id: UUID,
+    item_id: int,
+    decision: str
+) -> asyncpg.Record:
+    """Record a keep/cut decision, increment counter, decrement remaining.
+       Returns the updated session (remaining, kept_count, cut_count)."""
+    if decision == 'keep':
+        return await conn.fetchrow("""
+            UPDATE game_sessions
+            SET kept_count = kept_count + 1,
+                remaining = remaining - 1,
+                updated_at = NOW()
+            WHERE id = $1 AND $2 = ANY(item_ids)
+            RETURNING remaining, kept_count, cut_count
+        """, session_id, item_id)
+    else:
+        return await conn.fetchrow("""
+            UPDATE game_sessions
+            SET cut_count = cut_count + 1,
+                remaining = remaining - 1,
+                updated_at = NOW()
+            WHERE id = $1 AND $2 = ANY(item_ids)
+            RETURNING remaining, kept_count, cut_count
+        """, session_id, item_id)
+
+
+async def get_random_items(
+    conn: asyncpg.Connection,
+    edition: str,
+    limit: int
+) -> List[asyncpg.Record]:
+    return await conn.fetch("""
+        SELECT id, name, image_url, edition
+        FROM items
+        WHERE edition = $1
+        ORDER BY RANDOM()
+        LIMIT $2
+    """, edition, limit)
+
+
 async def get_random_unshown_items(
     conn: asyncpg.Connection,
     edition: str,

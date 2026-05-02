@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS game_sessions (
     kept_count INTEGER DEFAULT 0,
     cut_count INTEGER DEFAULT 0,
     shown_ids INTEGER[] DEFAULT '{}',
+    item_ids INTEGER[] DEFAULT NULL,
     completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
