@@ -168,7 +168,7 @@ function ResultColumn({ title, items, accent }: { title: string, items: Item[], 
               />
             </div>
             <div className="text-center">
-              <div className="text-sm font-bold truncate px-1">{item.name}</div>
+              <div className="text-sm font-bold whitespace-normal break-words leading-snug px-1">{item.name}</div>
             </div>
           </motion.div>
         ))}

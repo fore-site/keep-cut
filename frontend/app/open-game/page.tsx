@@ -134,21 +134,21 @@ export default function OpenGamePage() {
               </div>
 
               <div className="text-center">
-                <div className="text-sm font-bold truncate px-1">{item.name}</div>
+                <div className="text-sm font-bold whitespace-normal break-words leading-snug px-1">{item.name}</div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => handleDecision(item, "keep")}
                   disabled={!!decided || pendingItemId != null}
-                  className="btn-keep py-2 text-sm shadow-none disabled:opacity-50"
+                  className="btn-keep flex items-center justify-center text-center py-2 text-sm leading-none shadow-none disabled:opacity-50"
                 >
                   KEEP
                 </button>
                 <button
                   onClick={() => handleDecision(item, "cut")}
                   disabled={!!decided || pendingItemId != null}
-                  className="btn-cut py-2 text-sm shadow-none disabled:opacity-50"
+                  className="btn-cut flex items-center justify-center text-center py-2 text-sm leading-none shadow-none disabled:opacity-50"
                 >
                   CUT
                 </button>

@@ -160,7 +160,7 @@ function LeaderboardColumn({ title, items }: { title: string, items: { id: numbe
                 referrerPolicy="no-referrer"
               />
               <div className="flex-1 min-w-0">
-                <div className="font-bold truncate">{item.name}</div>
+                <div className="font-bold whitespace-normal break-words">{item.name}</div>
                 {/* Votes count */}
                 <div className="text-xs opacity-60">{item.count ?? 0} votes</div>
               </div>
