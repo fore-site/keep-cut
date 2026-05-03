@@ -50,40 +50,79 @@ export default function ResultsPage() {
       }
     }
 
+    // Persist any recovered session_id so share works after refresh.
+    if (parsed.session_id) {
+      try {
+        localStorage.setItem("results", JSON.stringify(parsed));
+      } catch {
+        // ignore
+      }
+    } else {
+      console.warn("Missing session_id in results payload; sharing disabled.", parsed);
+    }
+
     setResults(parsed);
   }, [router]);
 
   function getShareUrl() {
     if (!results?.session_id) return null;
-    return `${window.location.origin}/share/${results.session_id}`;
+    const origin =
+      typeof window !== "undefined" && window.location?.origin
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_SITE_URL || "https://keep-cut.vercel.app";
+    return `${origin}/share/${results.session_id}`;
   }
 
-  function handleCopy() {
+  async function handleCopy() {
     const url = getShareUrl();
-    if (!url) return;
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (!url) {
+      console.warn("Share URL unavailable: missing session_id", results);
+      return;
+    }
+    if (!navigator?.clipboard?.writeText) {
+      window.prompt("Copy this link:", url);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.warn("Failed to copy to clipboard", err);
+      window.prompt("Copy this link:", url);
+    }
   }
 
   function handleShareTwitter() {
     const shareUrl = getShareUrl();
-    if (!shareUrl) return;
+    if (!shareUrl) {
+      console.warn("Share URL unavailable: missing session_id", results);
+      return;
+    }
     const url = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}`;
-    window.open(url, "_blank");
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    if (!w) window.location.href = url;
   }
 
   function handleShareWhatsApp() {
     const shareUrl = getShareUrl();
-    if (!shareUrl) return;
+    if (!shareUrl) {
+      console.warn("Share URL unavailable: missing session_id", results);
+      return;
+    }
     const url = `https://wa.me/?text=${encodeURIComponent(shareUrl)}`;
-    window.open(url, "_blank");
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    if (!w) window.location.href = url;
   }
 
   function handleDownloadImage() {
-    if (!results?.session_id) return;
+    if (!results?.session_id) {
+      console.warn("Download URL unavailable: missing session_id", results);
+      return;
+    }
     const url = `${window.location.origin}/api/results-image/${results.session_id}`;
-    window.open(url, "_blank");
+    const w = window.open(url, "_blank", "noopener,noreferrer");
+    if (!w) window.location.href = url;
   }
 
   function handleShare() {
@@ -121,7 +160,7 @@ export default function ResultsPage() {
             className="bg-white border border-[#e2e1de] text-body px-8 py-4 rounded-xl font-bold transition-all hover:bg-peach active:scale-95 disabled:opacity-50 disabled:hover:bg-white w-full md:w-auto flex items-center justify-center gap-2"
           >
             <Share2 className={`w-5 h-5 ${copied ? "text-teal" : ""}`} />
-            Share Image
+            Share Results
           </button>
           {showShareOptions && (
             <div className="absolute left-0 mt-2 z-10 bg-white border border-[#e2e1de] rounded-xl shadow-lg p-4 flex flex-col gap-2 min-w-[180px]">
@@ -133,6 +172,15 @@ export default function ResultsPage() {
                 className="w-full text-left px-2 py-2 rounded hover:bg-peach"
               >
                 {copied ? "Copied!" : "Copy Share Link"}
+              </button>
+              <button
+                onClick={() => {
+                  if (results.session_id) router.push(`/share/${results.session_id}`);
+                  setShowShareOptions(false);
+                }}
+                className="w-full text-left px-2 py-2 rounded hover:bg-peach"
+              >
+                Open Share Page
               </button>
               <button
                 onClick={() => {
