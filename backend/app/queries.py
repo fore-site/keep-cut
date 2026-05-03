@@ -114,18 +114,6 @@ async def get_session(
     """, session_id)
 
 
-async def get_session_any(
-    conn: asyncpg.Connection,
-    session_id: UUID
-) -> Optional[asyncpg.Record]:
-    """Retrieve a game session by ID regardless of completion state."""
-    return await conn.fetchrow("""
-        SELECT id, edition, remaining, completed
-        FROM game_sessions
-        WHERE id = $1
-    """, session_id)
-
-
 async def update_session_decision(
     conn: asyncpg.Connection,
     session_id: UUID,

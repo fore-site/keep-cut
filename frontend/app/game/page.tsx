@@ -41,7 +41,6 @@ export default function GamePage() {
         // Show ending message before navigating
         setShowEnding({ action, edition: session.item.edition });
         localStorage.setItem("results", JSON.stringify({
-          session_id: session.session_id,
           kept: data.kept_items,
           cut: data.cut_items
         }));

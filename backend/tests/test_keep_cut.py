@@ -269,37 +269,4 @@ async def test_edge_case_keep_4_before_all_items_seen_with_larger_pool(client: A
     kept_ids = [i["id"] for i in data["kept_items"]]
     cut_ids = [i["id"] for i in data["cut_items"]]
     assert len(set(kept_ids) & set(cut_ids)) == 0
-
-
-@pytest.mark.asyncio
-async def test_get_results_for_completed_session(client: AsyncClient):
-    start = await client.post("/keep-cut/start", json={"edition": "anime"})
-    session_id = start.json()["session_id"]
-    current_data = {}
-
-    # End the game early by keeping 4 items.
-    for i in range(4):
-        item = start.json()["item"] if i == 0 else current_data["next_item"]
-        response = await client.post("/keep-cut/decide", json={
-            "session_id": session_id,
-            "item_id": item["id"],
-            "action": "keep"
-        })
-        current_data = response.json()
-
-    assert current_data["round_complete"] is True
-
-    results = await client.get(f"/keep-cut/results/{session_id}")
-    assert results.status_code == 200
-    data = results.json()
-    assert data["session_id"] == session_id
-    assert data["edition"] == "anime"
-    assert len(data["kept_items"]) == 4
-    assert len(data["cut_items"]) == 4
-
-
-@pytest.mark.asyncio
-async def test_results_not_found(client: AsyncClient):
-    response = await client.get("/keep-cut/results/00000000-0000-0000-0000-000000000000")
-    assert response.status_code == 404
     
