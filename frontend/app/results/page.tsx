@@ -83,7 +83,7 @@ export default function ResultsPage() {
       mode,
       keepImages,
       cutImages,
-      width: 1200,
+      width: 900,
     });
   }
 
