@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import type { NextRequest } from "next/server";
 
 export const runtime = "edge";
 
@@ -99,10 +100,10 @@ function ItemCard({ item, accent, label }: { item: Item; accent: string; label: 
 }
 
 export async function GET(
-  _req: Request,
-  { params }: { params: { sessionId: string } },
-) {
-  const { sessionId } = params;
+  _req: NextRequest,
+  { params }: { params: Promise<{ sessionId: string }> },
+): Promise<Response> {
+  const { sessionId } = await params;
   const apiBaseUrl = requireApiBaseUrl();
 
   let payload: ResultsResponse | null = null;

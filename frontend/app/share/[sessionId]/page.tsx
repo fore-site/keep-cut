@@ -11,9 +11,9 @@ function siteUrl(): string {
 }
 
 export async function generateMetadata(
-  { params }: { params: { sessionId: string } },
+  { params }: { params: Promise<{ sessionId: string }> },
 ): Promise<Metadata> {
-  const { sessionId } = params;
+  const { sessionId } = await params;
   const baseUrl = siteUrl();
 
   const pageUrl = `${baseUrl}/share/${sessionId}`;
@@ -39,9 +39,9 @@ export async function generateMetadata(
 }
 
 export default async function SharePage(
-  { params }: { params: { sessionId: string } },
+  { params }: { params: Promise<{ sessionId: string }> },
 ) {
-  const { sessionId } = params;
+  const { sessionId } = await params;
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
