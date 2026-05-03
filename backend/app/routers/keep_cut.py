@@ -128,6 +128,7 @@ async def make_decision(
             # Auto-vote for each remaining item with the opposite decision
             for item in remaining_items:
                 await insert_vote(conn, req.session_id, item["id"], session["edition"], opposite)
+                await update_session_decision(conn, req.session_id, item["id"], opposite)
 
         # After auto‑votes, fetch final kept/cut items
         kept_items_dict, cut_items_dict = await get_session_items_with_details(conn, req.session_id)

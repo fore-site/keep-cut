@@ -83,7 +83,7 @@ async def decide_open_game(
     
     # Check early termination
     if kept_count == 4 or cut_count == 4:
-        # Auto\u2011assign remaining items (those not yet voted)
+        # Autoassign remaining items (those not yet voted)
         # Get all voted item ids from votes table
         voted_rows = await conn.fetch("SELECT item_id FROM votes WHERE session_id = $1", req.session_id)
         voted_ids = [row["item_id"] for row in voted_rows]
@@ -92,7 +92,8 @@ async def decide_open_game(
         opposite = "cut" if kept_count == 4 else "keep"
         for it_id in remaining_item_ids:
             await insert_vote(conn, req.session_id, it_id, session["edition"], opposite)
-        
+            await update_open_session_decision(conn, req.session_id, it_id, opposite)
+
         await mark_session_complete(conn, req.session_id)
         
         # Fetch final kept and cut items with details
