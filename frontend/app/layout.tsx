@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, Figtree } from "next/font/google";
 import Footer from "@/components/Footer";
+import Head from "./head.tsx";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -27,6 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <Head />
       <body className={`${outfit.variable} ${figtree.variable} antialiased flex flex-col min-h-screen`}>
         <main className="max-w-4xl mx-auto px-4 py-8 flex-grow">
           {children}
