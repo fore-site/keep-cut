@@ -20,6 +20,14 @@ export default function Footer() {
             >
               GitHub
             </a>
+              <a
+                href="https://x.com/fore-site"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-terracotta transition-colors"
+              >
+                Contact developer
+              </a>
           </div>
           <p className="text-xs text-center">
             © {new Date().getFullYear()} Keep-Cut Game. Data from{" "}

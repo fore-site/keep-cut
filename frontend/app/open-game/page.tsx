@@ -55,7 +55,9 @@ export default function OpenGamePage() {
         setTimeout(() => router.push("/results"), 2000);
       }
     } catch (err) {
-      setError("This session is completed. Kindly start over.");
+      setError(
+        'This session is completed. Kindly <a href="/choose-edition" class="underline font-bold text-terracotta">start over</a>.'
+      );
     } finally {
       setPendingItemId(null);
     }
@@ -160,7 +162,7 @@ export default function OpenGamePage() {
 
       {error && (
         <div className="p-4 bg-coral/10 text-coral rounded-xl text-center font-bold animate-bounce">
-          {error}
+          <span dangerouslySetInnerHTML={{ __html: error }} />
         </div>
       )}
     </div>
