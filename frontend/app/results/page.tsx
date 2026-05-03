@@ -108,26 +108,6 @@ export default function ResultsPage() {
                 }}
                 className="w-full text-left px-2 py-2 rounded hover:bg-peach"
               >
-                {copied ? "Copied!" : "Copy Share Link"}
-              </button>
-              <button
-                onClick={() => {
-                  if (results.session_id)
-                    router.push(`/share/${results.session_id}`);
-                  setShowShareOptions(false);
-                }}
-                className="w-full text-left px-2 py-2 rounded hover:bg-peach"
-              >
-                Open Share Page
-              </button>
-              <button
-                onClick={() => {
-                  handleDownloadImage();
-                  setShowShareOptions(false);
-                }}
-                className="w-full text-left px-2 py-2 rounded hover:bg-peach"
-              >
-                Download Image
                 {copied ? "Copied!" : "Copy to Clipboard"}
               </button>
               <button
