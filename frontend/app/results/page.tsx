@@ -78,7 +78,7 @@ export default function ResultsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <ResultColumn title="Your Kept" items={results.kept} accent="teal" />
+        <ResultColumn title="Your Keep" items={results.kept} accent="teal" />
         <ResultColumn title="Your Cut" items={results.cut} accent="coral" />
       </div>
 

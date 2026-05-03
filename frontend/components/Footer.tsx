@@ -21,7 +21,7 @@ export default function Footer() {
               GitHub
             </a>
               <a
-                href="https://x.com/fore-site"
+                href="https://x.com/fore_site"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-terracotta transition-colors"
