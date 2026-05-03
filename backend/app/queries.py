@@ -30,7 +30,7 @@ async def get_random_item_excluding(
         SELECT id, name, image_url, edition
         FROM items
         WHERE edition = $1
-          AND id != ANY($2::int[])
+          AND id != ALL($2::int[])
         ORDER BY RANDOM()
         LIMIT 1
     """, edition, excluded_ids)
