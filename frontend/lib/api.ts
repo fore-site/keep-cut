@@ -144,3 +144,37 @@ export async function getLeaderboard(type: 'kept' | 'cut', edition: string, limi
       : item.cut_count ?? 0,
   }));
 }
+
+export async function fetchResultsCardPng(args: {
+  edition: string;
+  mode: string;
+  keepImages: string[];
+  cutImages: string[];
+  width?: number;
+}): Promise<Blob> {
+  const baseUrl = requireApiBaseUrl();
+  const response = await fetch(`${baseUrl}/images/results-card`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      edition: args.edition,
+      mode: args.mode,
+      keep_images: args.keepImages,
+      cut_images: args.cutImages,
+      width: args.width,
+    }),
+  });
+
+  if (!response.ok) {
+    let message = `Request failed (${response.status})`;
+    try {
+      const data = await response.json();
+      message = typeof data?.detail === "string" ? data.detail : message;
+    } catch {
+      // ignore non-json
+    }
+    throw new Error(message);
+  }
+
+  return response.blob();
+}

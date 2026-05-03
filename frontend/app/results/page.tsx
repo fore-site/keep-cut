@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { type Item } from "@/lib/api";
+import { fetchResultsCardPng, type Item } from "@/lib/api";
 import { Share2, RotateCcw, Home } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -13,6 +13,7 @@ export default function ResultsPage() {
   );
   const [copied, setCopied] = useState(false);
   const [showShareOptions, setShowShareOptions] = useState(false);
+  const [shareBusy, setShareBusy] = useState(false);
   const shareBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -53,17 +54,95 @@ export default function ResultsPage() {
   function handleShareTwitter() {
     const text = getShareText();
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   function handleShareWhatsApp() {
     const text = getShareText();
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   function handleShare() {
     setShowShareOptions((v) => !v);
+  }
+
+  async function buildResultsCardBlob() {
+    if (!results) throw new Error("No results to share");
+    const edition = localStorage.getItem("edition");
+    const mode = localStorage.getItem("mode");
+    if (!edition) throw new Error("Missing edition");
+    if (!mode) throw new Error("Missing mode");
+    const keepImages = results.kept.slice(0, 4).map((i) => i.image_url);
+    const cutImages = results.cut.slice(0, 4).map((i) => i.image_url);
+    if (keepImages.length !== 4 || cutImages.length !== 4) {
+      throw new Error("Need exactly 4 keeps and 4 cuts to generate the card");
+    }
+    return fetchResultsCardPng({
+      edition,
+      mode,
+      keepImages,
+      cutImages,
+      width: 900,
+    });
+  }
+
+  function downloadBlob(blob: Blob, fileName: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleDownloadImage() {
+    try {
+      setShareBusy(true);
+      const blob = await buildResultsCardBlob();
+      const edition = localStorage.getItem("edition") || "edition";
+      const mode = localStorage.getItem("mode") || "mode";
+      const fileName = `keepcut_${edition}_${mode}.png`.replaceAll(" ", "_");
+      downloadBlob(blob, fileName);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to download image";
+      alert(message);
+    } finally {
+      setShareBusy(false);
+    }
+  }
+
+  async function handleNativeShare(target: "whatsapp" | "x") {
+    try {
+      setShareBusy(true);
+      const blob = await buildResultsCardBlob();
+      const edition = localStorage.getItem("edition") || "edition";
+      const mode = localStorage.getItem("mode") || "mode";
+      const fileName = `keepcut_${edition}_${mode}.png`.replaceAll(" ", "_");
+      const file = new File([blob], fileName, { type: "image/png" });
+      const text = getShareText();
+
+      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+        await navigator.share({
+          title: "Keep/Cut Results",
+          text,
+          files: [file],
+        });
+        return;
+      }
+
+      // Fallback: share caption text via intent URLs (image download happens separately)
+      downloadBlob(blob, fileName);
+      if (target === "whatsapp") handleShareWhatsApp();
+      else handleShareTwitter();
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Share failed";
+      alert(message);
+    } finally {
+      setShareBusy(false);
+    }
   }
 
   if (!results) return null;
@@ -106,16 +185,47 @@ export default function ResultsPage() {
                   handleCopy();
                   setShowShareOptions(false);
                 }}
-                className="w-full text-left px-2 py-2 rounded hover:bg-peach"
+                disabled={shareBusy}
+                className="w-full text-left px-2 py-2 rounded hover:bg-peach disabled:opacity-50"
               >
                 {copied ? "Copied!" : "Copy to Clipboard"}
               </button>
               <button
-                onClick={() => {
-                  handleShareTwitter();
+                onClick={async () => {
                   setShowShareOptions(false);
+                  await handleDownloadImage();
                 }}
-                className="w-full text-left px-2 py-2 rounded hover:bg-peach"
+                disabled={shareBusy}
+                className="w-full text-left px-2 py-2 rounded hover:bg-peach disabled:opacity-50"
+              >
+                Download image
+              </button>
+              <button
+                onClick={() => {
+                  setShowShareOptions(false);
+                  void handleNativeShare("whatsapp");
+                }}
+                disabled={shareBusy}
+                className="w-full text-left px-2 py-2 rounded hover:bg-peach disabled:opacity-50"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <svg
+                    viewBox="0 0 32 32"
+                    fill="currentColor"
+                    className="w-4 h-4"
+                  >
+                    <path d="M16.003 3.2c-7.067 0-12.8 5.733-12.8 12.8 0 2.26.6 4.467 1.733 6.4l-1.8 6.533a1.067 1.067 0 0 0 1.307 1.307l6.533-1.8a12.73 12.73 0 0 0 6.027 1.547h.013c7.067 0 12.8-5.733 12.8-12.8 0-3.413-1.333-6.627-3.76-9.053C22.63 4.533 19.417 3.2 16.003 3.2zm0 23.467c-1.92 0-3.84-.507-5.493-1.467a1.067 1.067 0 0 0-.64-.12l-5.013 1.387 1.387-5.013a1.067 1.067 0 0 0-.12-.64A10.66 10.66 0 0 1 5.337 16c0-5.893 4.773-10.667 10.667-10.667 2.84 0 5.507 1.107 7.52 3.12a10.62 10.62 0 0 1 3.147 7.547c0 5.893-4.773 10.667-10.667 10.667zm5.44-7.36c-.293-.147-1.733-.867-2-1.013-.267-.147-.467-.213-.667.147-.2.36-.76 1.013-.933 1.213-.173.2-.347.227-.64.08-.293-.147-1.24-.457-2.36-1.453-.872-.777-1.46-1.733-1.633-2.027-.173-.293-.018-.453.13-.6.133-.133.293-.347.44-.52.147-.173.2-.293.3-.493.1-.2.05-.373-.025-.52-.08-.147-.667-1.6-.92-2.2-.24-.58-.48-.5-.667-.507l-.56-.01c-.2 0-.52.073-.793.367-.273.293-1.04 1.017-1.04 2.48 0 1.46 1.067 2.873 1.213 3.067.147.2 2.1 3.213 5.093 4.373.713.307 1.267.49 1.7.627.713.227 1.36.193 1.873.117.573-.087 1.733-.707 1.98-1.387.247-.68.247-1.267.173-1.387-.073-.12-.267-.193-.56-.34z" />
+                  </svg>
+                  Share on WhatsApp
+                </span>
+              </button>
+              <button
+                onClick={() => {
+                  setShowShareOptions(false);
+                  void handleNativeShare("x");
+                }}
+                disabled={shareBusy}
+                className="w-full text-left px-2 py-2 rounded hover:bg-peach disabled:opacity-50"
               >
                 <span className="inline-flex items-center gap-2">
                   {/* X (Twitter) logo SVG */}
@@ -127,24 +237,6 @@ export default function ResultsPage() {
                     <path d="M1199.61 0H950.94L599.8 465.9 299.06 0H.39l399.7 610.13L0 1227h249.06l368.6-511.2 299.06 511.2h248.89L817.5 610.13 1199.61 0Zm-212.2 1130.1-285.7-488.6-71.91-122.9-71.91 122.9-285.7 488.6H137.5l362.3-557.1-362.3-553.2h142.59l285.7 438.2 71.91 110.2 71.91-110.2 285.7-438.2h142.59l-362.3 553.2 362.3 557.1h-142.59Z" />
                   </svg>
                   Share on X
-                </span>
-              </button>
-              <button
-                onClick={() => {
-                  handleShareWhatsApp();
-                  setShowShareOptions(false);
-                }}
-                className="w-full text-left px-2 py-2 rounded hover:bg-peach"
-              >
-                <span className="inline-flex items-center gap-2">
-                  <svg
-                    viewBox="0 0 32 32"
-                    fill="currentColor"
-                    className="w-4 h-4"
-                  >
-                    <path d="M16.003 3.2c-7.067 0-12.8 5.733-12.8 12.8 0 2.26.6 4.467 1.733 6.4l-1.8 6.533a1.067 1.067 0 0 0 1.307 1.307l6.533-1.8a12.73 12.73 0 0 0 6.027 1.547h.013c7.067 0 12.8-5.733 12.8-12.8 0-3.413-1.333-6.627-3.76-9.053C22.63 4.533 19.417 3.2 16.003 3.2zm0 23.467c-1.92 0-3.84-.507-5.493-1.467a1.067 1.067 0 0 0-.64-.12l-5.013 1.387 1.387-5.013a1.067 1.067 0 0 0-.12-.64A10.66 10.66 0 0 1 5.337 16c0-5.893 4.773-10.667 10.667-10.667 2.84 0 5.507 1.107 7.52 3.12a10.62 10.62 0 0 1 3.147 7.547c0 5.893-4.773 10.667-10.667 10.667zm5.44-7.36c-.293-.147-1.733-.867-2-1.013-.267-.147-.467-.213-.667.147-.2.36-.76 1.013-.933 1.213-.173.2-.347.227-.64.08-.293-.147-1.24-.457-2.36-1.453-.872-.777-1.46-1.733-1.633-2.027-.173-.293-.018-.453.13-.6.133-.133.293-.347.44-.52.147-.173.2-.293.3-.493.1-.2.05-.373-.025-.52-.08-.147-.667-1.6-.92-2.2-.24-.58-.48-.5-.667-.507l-.56-.01c-.2 0-.52.073-.793.367-.273.293-1.04 1.017-1.04 2.48 0 1.46 1.067 2.873 1.213 3.067.147.2 2.1 3.213 5.093 4.373.713.307 1.267.49 1.7.627.713.227 1.36.193 1.873.117.573-.087 1.733-.707 1.98-1.387.247-.68.247-1.267.173-1.387-.073-.12-.267-.193-.56-.34z" />
-                  </svg>
-                  Share on WhatsApp
                 </span>
               </button>
             </div>

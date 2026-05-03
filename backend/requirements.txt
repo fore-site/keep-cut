@@ -5,6 +5,7 @@ pydantic
 python-dotenv
 aiohttp
 requests
+pillow
 pytest-asyncio
 pytest
 httpx
