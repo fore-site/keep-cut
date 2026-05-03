@@ -6,9 +6,15 @@ import { type Item } from "@/lib/api";
 import { Share2, RotateCcw, Home } from "lucide-react";
 import { motion } from "motion/react";
 
+type ResultsPayload = {
+  session_id?: string;
+  kept: Item[];
+  cut: Item[];
+};
+
 export default function ResultsPage() {
   const router = useRouter();
-  const [results, setResults] = useState<{ kept: Item[], cut: Item[] } | null>(null);
+  const [results, setResults] = useState<ResultsPayload | null>(null);
   const [copied, setCopied] = useState(false);
   const [showShareOptions, setShowShareOptions] = useState(false);
   const shareBtnRef = useRef<HTMLButtonElement>(null);
@@ -19,45 +25,65 @@ export default function ResultsPage() {
       router.replace("/choose-edition");
       return;
     }
-    setResults(JSON.parse(saved));
+    let parsed: ResultsPayload | null = null;
+    try {
+      parsed = JSON.parse(saved) as ResultsPayload;
+    } catch {
+      parsed = null;
+    }
+    if (!parsed) {
+      router.replace("/choose-edition");
+      return;
+    }
+
+    if (!parsed.session_id) {
+      const currentSession = localStorage.getItem("current_session");
+      const openSession = localStorage.getItem("open_session");
+      const from = currentSession || openSession;
+      if (from) {
+        try {
+          const s = JSON.parse(from) as { session_id?: string };
+          if (s?.session_id) parsed.session_id = s.session_id;
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    setResults(parsed);
   }, [router]);
 
-  function getShareText() {
-    if (!results) return '';
-    // Get edition from localStorage (fallback to 'Unknown Edition' if not found)
-    const edition = localStorage.getItem("edition") || "unknown";
-    const mode = localStorage.getItem("mode") || "unknown";
-    const keptList = results.kept.length
-      ? results.kept.map(i => `• ${i.name}`).join("\n")
-      : 'None';
-    const cutList = results.cut.length
-      ? results.cut.map(i => `• ${i.name}`).join("\n")
-      : 'None';
-    return (
-      `I played Keep/Cut! (${edition} edition - ${mode} mode)\n\n` +
-      `Kept:\n${keptList}\n\n` +
-      `Cut:\n${cutList}\n\n` +
-      `Try it yourself: https://keep-cut.vercel.app`
-    );
+  function getShareUrl() {
+    if (!results?.session_id) return null;
+    return `${window.location.origin}/share/${results.session_id}`;
   }
 
   function handleCopy() {
-    const text = getShareText();
-    navigator.clipboard.writeText(text);
+    const url = getShareUrl();
+    if (!url) return;
+    navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
   function handleShareTwitter() {
-    const text = getShareText();
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    const shareUrl = getShareUrl();
+    if (!shareUrl) return;
+    const url = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}`;
+    window.open(url, "_blank");
   }
 
   function handleShareWhatsApp() {
-    const text = getShareText();
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    const shareUrl = getShareUrl();
+    if (!shareUrl) return;
+    const url = `https://wa.me/?text=${encodeURIComponent(shareUrl)}`;
+    window.open(url, "_blank");
+  }
+
+  function handleDownloadImage() {
+    if (!results?.session_id) return;
+    const url = `${window.location.origin}/api/results-image/${results.session_id}`;
+    window.open(url, "_blank");
   }
 
   function handleShare() {
@@ -65,6 +91,7 @@ export default function ResultsPage() {
   }
 
   if (!results) return null;
+  const shareDisabled = !results.session_id;
 
   return (
     <div className="space-y-12 animate-in fade-in zoom-in-95 duration-500">
@@ -90,10 +117,11 @@ export default function ResultsPage() {
           <button
             ref={shareBtnRef}
             onClick={handleShare}
-            className="bg-white border border-[#e2e1de] text-body px-8 py-4 rounded-xl font-bold transition-all hover:bg-peach active:scale-95 w-full md:w-auto flex items-center justify-center gap-2"
+            disabled={shareDisabled}
+            className="bg-white border border-[#e2e1de] text-body px-8 py-4 rounded-xl font-bold transition-all hover:bg-peach active:scale-95 disabled:opacity-50 disabled:hover:bg-white w-full md:w-auto flex items-center justify-center gap-2"
           >
             <Share2 className={`w-5 h-5 ${copied ? "text-teal" : ""}`} />
-            Share Results
+            Share Image
           </button>
           {showShareOptions && (
             <div className="absolute left-0 mt-2 z-10 bg-white border border-[#e2e1de] rounded-xl shadow-lg p-4 flex flex-col gap-2 min-w-[180px]">
@@ -104,7 +132,16 @@ export default function ResultsPage() {
                 }}
                 className="w-full text-left px-2 py-2 rounded hover:bg-peach"
               >
-                {copied ? "Copied!" : "Copy to Clipboard"}
+                {copied ? "Copied!" : "Copy Share Link"}
+              </button>
+              <button
+                onClick={() => {
+                  handleDownloadImage();
+                  setShowShareOptions(false);
+                }}
+                className="w-full text-left px-2 py-2 rounded hover:bg-peach"
+              >
+                Download Image
               </button>
               <button
                 onClick={() => {

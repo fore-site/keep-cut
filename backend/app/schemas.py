@@ -45,6 +45,13 @@ class SessionStatusResponse(BaseModel):
     cut_items: List[ItemResponse]
 
 
+class ResultsResponse(BaseModel):
+    session_id: UUID
+    edition: str
+    kept_items: List[ItemResponse]
+    cut_items: List[ItemResponse]
+
+
 class VotePayload(BaseModel):
     session_id: UUID
     item_id: int

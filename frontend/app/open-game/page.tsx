@@ -50,7 +50,7 @@ export default function OpenGamePage() {
         setShowEnding({ action, edition: item.edition });
         localStorage.setItem(
           "results",
-          JSON.stringify({ kept: data.kept_items, cut: data.cut_items }),
+          JSON.stringify({ session_id: session.session_id, kept: data.kept_items, cut: data.cut_items }),
         );
         setTimeout(() => router.push("/results"), 2000);
       }

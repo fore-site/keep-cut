@@ -11,6 +11,7 @@ from app.schemas import (
     DecisionRequest,
     DecisionResponse,
     SessionStatusResponse,
+    ResultsResponse,
     ItemResponse
 )
 from app.queries import (
@@ -19,6 +20,7 @@ from app.queries import (
     get_item_by_id,
     create_session,
     get_session,
+    get_session_any,
     update_session_decision,
     get_random_unshown_items,
     mark_session_complete,
@@ -206,6 +208,33 @@ async def get_session_status(
         session_id=session["id"],
         edition=session["edition"],
         remaining=session["remaining"],
+        kept_items=kept_items,
+        cut_items=cut_items
+    )
+
+
+@router.get("/results/{session_id}", response_model=ResultsResponse)
+@limiter.limit("30/minute")
+async def get_session_results(
+    session_id: UUID,
+    request: Request,
+    conn: asyncpg.Connection = Depends(get_db)
+):
+    """
+    Get final (or current) kept/cut items for a session.
+    Works for both active and completed sessions.
+    """
+    session = await get_session_any(conn, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    kept_items_dict, cut_items_dict = await get_session_items_with_details(conn, session_id)
+    kept_items = [ItemResponse(**item) for item in kept_items_dict]
+    cut_items = [ItemResponse(**item) for item in cut_items_dict]
+
+    return ResultsResponse(
+        session_id=session["id"],
+        edition=session["edition"],
         kept_items=kept_items,
         cut_items=cut_items
     )
