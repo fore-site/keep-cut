@@ -175,6 +175,5 @@ export async function fetchResultsCardPng(args: {
     }
     throw new Error(message);
   }
-  const blob = await response.blob()
-  return blob;
+  return response.blob()
 }
